@@ -1,0 +1,27 @@
+[project]
+name = "project-template"
+description = "Default repo template for ML/DL projects"
+readme = "README.md"
+requires-python = ">=3.8"
+version = "0.0.1"
+authors = [
+	{name = "Yakhyokhuja Valikhujaev", email = "yakhyo9696@gmail.com"}
+]
+
+[tool.isort]
+line_length = 120
+
+[tool.black]
+line_length = 120
+target-version = ['py38']
+
+[tool.pyright]
+typeCheckingMode = "basic"
+
+reportIncompatibleMethodOverride = "information"
+reportPrivateImportUsage = "information"
+reportOptionalSubscript = "none"
+
+pythonVersion = "3.8"
+pythonPlatform = "Linux"
+# configurations -> https://github.com/microsoft/pyright/blob/main/docs/configuration.md
