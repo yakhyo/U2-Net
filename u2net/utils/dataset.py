@@ -1,26 +1,27 @@
 # data loader
-from __future__ import print_function, division
+from __future__ import division, print_function
+
 import glob
-import torch
-from skimage import io, transform, color
-import numpy as np
-import random
 import math
+import random
+
 import matplotlib.pyplot as plt
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, utils
+import numpy as np
+import torch
 from PIL import Image
+from skimage import color, io, transform
+from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms, utils
 
 
 # ==========================dataset load==========================
 class RescaleT(object):
-
     def __init__(self, output_size):
         assert isinstance(output_size, (int, tuple))
         self.output_size = output_size
 
     def __call__(self, sample):
-        imidx, image, label = sample['imidx'], sample['image'], sample['label']
+        imidx, image, label = sample["imidx"], sample["image"], sample["label"]
 
         h, w = image.shape[:2]
 
@@ -38,21 +39,21 @@ class RescaleT(object):
         # img = transform.resize(image,(new_h,new_w),mode='constant')
         # lbl = transform.resize(label,(new_h,new_w),mode='constant', order=0, preserve_range=True)
 
-        img = transform.resize(image, (self.output_size, self.output_size), mode='constant')
-        lbl = transform.resize(label, (self.output_size, self.output_size), mode='constant', order=0,
-                               preserve_range=True)
+        img = transform.resize(image, (self.output_size, self.output_size), mode="constant")
+        lbl = transform.resize(
+            label, (self.output_size, self.output_size), mode="constant", order=0, preserve_range=True
+        )
 
-        return {'imidx': imidx, 'image': img, 'label': lbl}
+        return {"imidx": imidx, "image": img, "label": lbl}
 
 
 class Rescale(object):
-
     def __init__(self, output_size):
         assert isinstance(output_size, (int, tuple))
         self.output_size = output_size
 
     def __call__(self, sample):
-        imidx, image, label = sample['imidx'], sample['image'], sample['label']
+        imidx, image, label = sample["imidx"], sample["image"], sample["label"]
 
         if random.random() >= 0.5:
             image = image[::-1]
@@ -71,14 +72,13 @@ class Rescale(object):
         new_h, new_w = int(new_h), int(new_w)
 
         # #resize the image to new_h x new_w and convert image from range [0,255] to [0,1]
-        img = transform.resize(image, (new_h, new_w), mode='constant')
-        lbl = transform.resize(label, (new_h, new_w), mode='constant', order=0, preserve_range=True)
+        img = transform.resize(image, (new_h, new_w), mode="constant")
+        lbl = transform.resize(label, (new_h, new_w), mode="constant", order=0, preserve_range=True)
 
-        return {'imidx': imidx, 'image': img, 'label': lbl}
+        return {"imidx": imidx, "image": img, "label": lbl}
 
 
 class RandomCrop(object):
-
     def __init__(self, output_size):
         assert isinstance(output_size, (int, tuple))
         if isinstance(output_size, int):
@@ -88,7 +88,7 @@ class RandomCrop(object):
             self.output_size = output_size
 
     def __call__(self, sample):
-        imidx, image, label = sample['imidx'], sample['image'], sample['label']
+        imidx, image, label = sample["imidx"], sample["image"], sample["label"]
 
         if random.random() >= 0.5:
             image = image[::-1]
@@ -100,10 +100,10 @@ class RandomCrop(object):
         top = np.random.randint(0, h - new_h)
         left = np.random.randint(0, w - new_w)
 
-        image = image[top: top + new_h, left: left + new_w]
-        label = label[top: top + new_h, left: left + new_w]
+        image = image[top : top + new_h, left : left + new_w]
+        label = label[top : top + new_h, left : left + new_w]
 
-        return {'imidx': imidx, 'image': image, 'label': label}
+        return {"imidx": imidx, "image": image, "label": label}
 
 
 class ToTensor(object):
@@ -111,13 +111,13 @@ class ToTensor(object):
 
     def __call__(self, sample):
 
-        imidx, image, label = sample['imidx'], sample['image'], sample['label']
+        imidx, image, label = sample["imidx"], sample["image"], sample["label"]
 
         tmpImg = np.zeros((image.shape[0], image.shape[1], 3))
         tmpLbl = np.zeros(label.shape)
 
         image = image / np.max(image)
-        if (np.max(label) < 1e-6):
+        if np.max(label) < 1e-6:
             label = label
         else:
             label = label / np.max(label)
@@ -136,7 +136,7 @@ class ToTensor(object):
         tmpImg = tmpImg.transpose((2, 0, 1))
         tmpLbl = label.transpose((2, 0, 1))
 
-        return {'imidx': torch.from_numpy(imidx), 'image': torch.from_numpy(tmpImg), 'label': torch.from_numpy(tmpLbl)}
+        return {"imidx": torch.from_numpy(imidx), "image": torch.from_numpy(tmpImg), "label": torch.from_numpy(tmpLbl)}
 
 
 class ToTensorLab(object):
@@ -147,11 +147,11 @@ class ToTensorLab(object):
 
     def __call__(self, sample):
 
-        imidx, image, label = sample['imidx'], sample['image'], sample['label']
+        imidx, image, label = sample["imidx"], sample["image"], sample["label"]
 
         tmpLbl = np.zeros(label.shape)
 
-        if (np.max(label) < 1e-6):
+        if np.max(label) < 1e-6:
             label = label
         else:
             label = label / np.max(label)
@@ -170,17 +170,23 @@ class ToTensorLab(object):
 
             # nomalize image to range [0,1]
             tmpImg[:, :, 0] = (tmpImgt[:, :, 0] - np.min(tmpImgt[:, :, 0])) / (
-                    np.max(tmpImgt[:, :, 0]) - np.min(tmpImgt[:, :, 0]))
+                np.max(tmpImgt[:, :, 0]) - np.min(tmpImgt[:, :, 0])
+            )
             tmpImg[:, :, 1] = (tmpImgt[:, :, 1] - np.min(tmpImgt[:, :, 1])) / (
-                    np.max(tmpImgt[:, :, 1]) - np.min(tmpImgt[:, :, 1]))
+                np.max(tmpImgt[:, :, 1]) - np.min(tmpImgt[:, :, 1])
+            )
             tmpImg[:, :, 2] = (tmpImgt[:, :, 2] - np.min(tmpImgt[:, :, 2])) / (
-                    np.max(tmpImgt[:, :, 2]) - np.min(tmpImgt[:, :, 2]))
+                np.max(tmpImgt[:, :, 2]) - np.min(tmpImgt[:, :, 2])
+            )
             tmpImg[:, :, 3] = (tmpImgtl[:, :, 0] - np.min(tmpImgtl[:, :, 0])) / (
-                    np.max(tmpImgtl[:, :, 0]) - np.min(tmpImgtl[:, :, 0]))
+                np.max(tmpImgtl[:, :, 0]) - np.min(tmpImgtl[:, :, 0])
+            )
             tmpImg[:, :, 4] = (tmpImgtl[:, :, 1] - np.min(tmpImgtl[:, :, 1])) / (
-                    np.max(tmpImgtl[:, :, 1]) - np.min(tmpImgtl[:, :, 1]))
+                np.max(tmpImgtl[:, :, 1]) - np.min(tmpImgtl[:, :, 1])
+            )
             tmpImg[:, :, 5] = (tmpImgtl[:, :, 2] - np.min(tmpImgtl[:, :, 2])) / (
-                    np.max(tmpImgtl[:, :, 2]) - np.min(tmpImgtl[:, :, 2]))
+                np.max(tmpImgtl[:, :, 2]) - np.min(tmpImgtl[:, :, 2])
+            )
 
             # tmpImg = tmpImg/(np.max(tmpImg)-np.min(tmpImg))
 
@@ -206,11 +212,14 @@ class ToTensorLab(object):
             # tmpImg = tmpImg/(np.max(tmpImg)-np.min(tmpImg))
 
             tmpImg[:, :, 0] = (tmpImg[:, :, 0] - np.min(tmpImg[:, :, 0])) / (
-                    np.max(tmpImg[:, :, 0]) - np.min(tmpImg[:, :, 0]))
+                np.max(tmpImg[:, :, 0]) - np.min(tmpImg[:, :, 0])
+            )
             tmpImg[:, :, 1] = (tmpImg[:, :, 1] - np.min(tmpImg[:, :, 1])) / (
-                    np.max(tmpImg[:, :, 1]) - np.min(tmpImg[:, :, 1]))
+                np.max(tmpImg[:, :, 1]) - np.min(tmpImg[:, :, 1])
+            )
             tmpImg[:, :, 2] = (tmpImg[:, :, 2] - np.min(tmpImg[:, :, 2])) / (
-                    np.max(tmpImg[:, :, 2]) - np.min(tmpImg[:, :, 2]))
+                np.max(tmpImg[:, :, 2]) - np.min(tmpImg[:, :, 2])
+            )
 
             tmpImg[:, :, 0] = (tmpImg[:, :, 0] - np.mean(tmpImg[:, :, 0])) / np.std(tmpImg[:, :, 0])
             tmpImg[:, :, 1] = (tmpImg[:, :, 1] - np.mean(tmpImg[:, :, 1])) / np.std(tmpImg[:, :, 1])
@@ -233,7 +242,7 @@ class ToTensorLab(object):
         tmpImg = tmpImg.transpose((2, 0, 1))
         tmpLbl = label.transpose((2, 0, 1))
 
-        return {'imidx': torch.from_numpy(imidx), 'image': torch.from_numpy(tmpImg), 'label': torch.from_numpy(tmpLbl)}
+        return {"imidx": torch.from_numpy(imidx), "image": torch.from_numpy(tmpImg), "label": torch.from_numpy(tmpLbl)}
 
 
 class SalObjDataset(Dataset):
@@ -274,7 +283,7 @@ class SalObjDataset(Dataset):
             image = image[:, :, np.newaxis]
             label = label[:, :, np.newaxis]
 
-        sample = {'imidx': imidx, 'image': image, 'label': label}
+        sample = {"imidx": imidx, "image": image, "label": label}
 
         if self.transform:
             sample = self.transform(sample)

@@ -1,5 +1,5 @@
-import os
 import glob
+import os
 
 import torch
 from torch import nn, optim
@@ -8,10 +8,9 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
 from torchvision import transforms
+from u2net import U2NET, U2NETP
 
-from u2net.utils.dataset import Rescale, RescaleT, RandomCrop, ToTensor, ToTensorLab, SalObjDataset
-from u2net import U2NET
-from u2net import U2NETP
+from u2net.utils.dataset import RandomCrop, Rescale, RescaleT, SalObjDataset, ToTensor, ToTensorLab
 
 # ------- 1. define loss function --------
 
@@ -28,26 +27,34 @@ def muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v):
     loss6 = bce_loss(d6, labels_v)
 
     loss = loss0 + loss1 + loss2 + loss3 + loss4 + loss5 + loss6
-    print("l0: %3f, l1: %3f, l2: %3f, l3: %3f, l4: %3f, l5: %3f, l6: %3f\n" % (
-        loss0.data.item(), loss1.data.item(), loss2.data.item(), loss3.data.item(), loss4.data.item(),
-        loss5.data.item(),
-        loss6.data.item()))
+    print(
+        "l0: %3f, l1: %3f, l2: %3f, l3: %3f, l4: %3f, l5: %3f, l6: %3f\n"
+        % (
+            loss0.data.item(),
+            loss1.data.item(),
+            loss2.data.item(),
+            loss3.data.item(),
+            loss4.data.item(),
+            loss5.data.item(),
+            loss6.data.item(),
+        )
+    )
 
     return loss0, loss
 
 
 # ------- 2. set the directory of training dataset --------
 
-model_name = 'u2net'  # 'u2netp'
+model_name = "u2net"  # 'u2netp'
 
 data_dir = os.path.join("DUTS/")
-tra_image_dir = os.path.join('DUTS-TR', 'DUTS-TR-Image/')
-tra_label_dir = os.path.join('DUTS-TR', 'DUTS-TR-Mask/')
+tra_image_dir = os.path.join("DUTS-TR", "DUTS-TR-Image/")
+tra_label_dir = os.path.join("DUTS-TR", "DUTS-TR-Mask/")
 
-image_ext = '.jpg'
-label_ext = '.png'
+image_ext = ".jpg"
+label_ext = ".png"
 
-model_dir = "weights/"# os.path.join(os.getcwd(), 'saved_models', model_name + os.sep)
+model_dir = "weights/"  # os.path.join(os.getcwd(), 'saved_models', model_name + os.sep)
 
 epoch_num = 100000
 batch_size_train = 24
@@ -55,7 +62,7 @@ batch_size_val = 1
 train_num = 0
 val_num = 0
 
-tra_img_name_list = glob.glob(data_dir + tra_image_dir + '*' + image_ext)
+tra_img_name_list = glob.glob(data_dir + tra_image_dir + "*" + image_ext)
 
 tra_lbl_name_list = []
 for img_path in tra_img_name_list:
@@ -79,21 +86,15 @@ train_num = len(tra_img_name_list)
 salobj_dataset = SalObjDataset(
     img_name_list=tra_img_name_list,
     lbl_name_list=tra_lbl_name_list,
-    transform=transforms.Compose([
-        RescaleT(320),
-        RandomCrop(288),
-        ToTensorLab(flag=0)]))
-salobj_dataloader = DataLoader(
-    salobj_dataset,
-    batch_size=batch_size_train,
-    shuffle=True,
-    num_workers=24)
+    transform=transforms.Compose([RescaleT(320), RandomCrop(288), ToTensorLab(flag=0)]),
+)
+salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuffle=True, num_workers=24)
 
 # ------- 3. define model --------
 # define the net
-if (model_name == 'u2net'):
+if model_name == "u2net":
     net = U2NET(3, 1)
-elif (model_name == 'u2netp'):
+elif model_name == "u2netp":
     net = U2NETP(3, 1)
 
 if torch.cuda.is_available():
@@ -118,15 +119,16 @@ for epoch in range(0, epoch_num):
         ite_num = ite_num + 1
         ite_num4val = ite_num4val + 1
 
-        inputs, labels = data['image'], data['label']
+        inputs, labels = data["image"], data["label"]
 
         inputs = inputs.type(torch.FloatTensor)
         labels = labels.type(torch.FloatTensor)
 
         # wrap them in Variable
         if torch.cuda.is_available():
-            inputs_v, labels_v = Variable(inputs.cuda(), requires_grad=False), Variable(labels.cuda(),
-                                                                                        requires_grad=False)
+            inputs_v, labels_v = Variable(inputs.cuda(), requires_grad=False), Variable(
+                labels.cuda(), requires_grad=False
+            )
         else:
             inputs_v, labels_v = Variable(inputs, requires_grad=False), Variable(labels, requires_grad=False)
 
@@ -147,13 +149,27 @@ for epoch in range(0, epoch_num):
         # del temporary outputs and loss
         del d0, d1, d2, d3, d4, d5, d6, loss2, loss
 
-        print("[epoch: %3d/%3d, batch: %5d/%5d, ite: %d] train loss: %3f, tar: %3f " % (
-            epoch + 1, epoch_num, (i + 1) * batch_size_train, train_num, ite_num, running_loss / ite_num4val,
-            running_tar_loss / ite_num4val))
+        print(
+            "[epoch: %3d/%3d, batch: %5d/%5d, ite: %d] train loss: %3f, tar: %3f "
+            % (
+                epoch + 1,
+                epoch_num,
+                (i + 1) * batch_size_train,
+                train_num,
+                ite_num,
+                running_loss / ite_num4val,
+                running_tar_loss / ite_num4val,
+            )
+        )
 
         if ite_num % save_frq == 0:
-            torch.save(net.state_dict(), model_dir + model_name + "_bce_itr_%d_train_%3f_tar_%3f.pth" % (
-                ite_num, running_loss / ite_num4val, running_tar_loss / ite_num4val))
+            torch.save(
+                net.state_dict(),
+                model_dir
+                + model_name
+                + "_bce_itr_%d_train_%3f_tar_%3f.pth"
+                % (ite_num, running_loss / ite_num4val, running_tar_loss / ite_num4val),
+            )
             running_loss = 0.0
             running_tar_loss = 0.0
             net.train()  # resume train
