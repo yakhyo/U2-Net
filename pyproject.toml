@@ -1,5 +1,5 @@
 [project]
-name = "project-template"
+name = "u2net"
 version = "0.0.0"
 authors = [
     {name = "Yakhyokhuja Valikhujaev", email = "yakhyo9696@gmail.com"}
