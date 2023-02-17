@@ -30,12 +30,12 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Analysing the code with flake8
       run: |
-        flake8 . --config=setup.cfg
+        flake8 . --count --config=setup.cfg
     - name: Analysing the code with ufmt
       run: |
-        ufmt . --config=setup.cfg
+        ufmt . --count --config=setup.cfg
     - name: Analysing the code with pydocstyle
       run: |
-        pydocstyle . --config=setup.cfg
+        pydocstyle . --count --config=setup.cfg
 
 
