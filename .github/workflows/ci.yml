@@ -31,11 +31,11 @@ jobs:
     - name: Analysing the code with flake8
       run: |
         flake8 . --config=setup.cfg
-   - name: Analysing the code with ufmt
-     run: |
-       ufmt . --config=setup.cfg
-   - name: Analysing the code with pydocstyle
-     run: |
-       pydocstyle . --config=setup.cfg
+    - name: Analysing the code with ufmt
+      run: |
+        ufmt . --config=setup.cfg
+    - name: Analysing the code with pydocstyle
+      run: |
+        pydocstyle . --config=setup.cfg
 
 
