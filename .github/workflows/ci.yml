@@ -31,11 +31,10 @@ jobs:
     - name: Analysing the code with flake8
       run: |
         flake8 . --count --config=setup.cfg
-    - name: Analysing the code with ufmt
-      run: |
-        ufmt . --count --config=setup.cfg
     - name: Analysing the code with pydocstyle
       run: |
         pydocstyle . --count --config=setup.cfg
-
-
+    - name: Analysing the code with ufmt
+      uses: omnilib/ufmt@action-v1
+      with:
+        python-version: "3.10"
