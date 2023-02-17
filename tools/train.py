@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from u2net import U2NET, U2NETP
 
-from u2net.utils.dataset import RandomCrop, Rescale, RescaleT, SalObjDataset, ToTensor, ToTensorLab
+from u2net.utils.dataset import RandomCrop, RescaleT, SalObjDataset, ToTensorLab
 
 # ------- 1. define loss function --------
 
@@ -96,6 +96,11 @@ if model_name == "u2net":
     net = U2NET(3, 1)
 elif model_name == "u2netp":
     net = U2NETP(3, 1)
+
+print("loading")
+dict_load = torch.load("weights/u2net_bce_itr_10000_train_0.805740_tar_0.102233.pth", map_location="cpu")
+net.load_state_dict(dict_load)
+print("loading done")
 
 if torch.cuda.is_available():
     net.cuda()

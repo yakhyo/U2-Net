@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from u2net import U2NET  # full size version 173.6 MB
 
-from u2net.utils.dataset import RescaleT, SalObjDataset, ToTensor, ToTensorLab
+from u2net.utils.dataset import RescaleT, SalObjDataset, ToTensorLab
 
 
 # normalize the predicted SOD probability map
