@@ -1,6 +1,6 @@
 # Continuous Integration (CI) GitHub Action
 
-name: Template CI
+name: Github Actions
 
 on:
   push:
@@ -34,6 +34,3 @@ jobs:
     - name: Analysing the code with pydocstyle
       run: |
         pydocstyle . --count --config=setup.cfg
-    - name: Analysing the code with ufmt
-      run: |
-        ufmt . --count --config=setup.cfg
