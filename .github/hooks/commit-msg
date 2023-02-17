@@ -36,7 +36,7 @@ def print_with_color(message: str, level: Notification) -> None:
         level (str): notification message level [OK, INFO, WARNING, ERROR]
     """
     print(
-        f"{BColors[level]}{BColors.BOLD}{level}: [Policy]{message}{BColors.ENDC}"  # pylint: disable=line-too-long
+        f"{BColors[level]}{BColors.BOLD}{level}: [Policy]{message}{BColors.ENDC}"
     )
 
 

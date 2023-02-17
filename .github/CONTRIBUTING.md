@@ -27,13 +27,13 @@ We adopt [PEP8](https://www.python.org/dev/peps/pep-0008/) as the preferred code
 
 We use the following tools for linting and formatting:
 
-- [pylint](https://github.com/PyCQA/pylint): static code analyser
-- [black](https://github.com/psf/black): formatter
-- [isort](https://github.com/pycqa/isort): sort imports
+- [flake8](https://github.com/PyCQA/flake8): static code analyser
+- [ufmt](https://github.com/omnilib/ufmt): formatter
+- [pydocstyle](https://github.com/PyCQA/pydocstyle): sort imports
 
 
-We use [pre-commit hook](https://pre-commit.com/) that checks and formats for `isort`, `trailing whitespaces`, 
-fixes `end-of-files`, sorts `requirments.txt` automatically on every commit.
+We use [pre-commit hook](https://pre-commit.com/) that checks and formats for `trailing whitespaces`, 
+fixes `end-of-files` automatically on every commit.
 The config for a pre-commit hook is stored in [.pre-commit-config](../.pre-commit-config.yaml).
 
 After you clone the repository, you will need to install initialize pre-commit hook.
