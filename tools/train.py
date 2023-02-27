@@ -57,7 +57,7 @@ label_ext = ".png"
 model_dir = "weights/"  # os.path.join(os.getcwd(), 'saved_models', model_name + os.sep)
 
 epoch_num = 100000
-batch_size_train = 24
+batch_size_train = 16
 batch_size_val = 1
 train_num = 0
 val_num = 0
@@ -98,7 +98,7 @@ elif model_name == "u2netp":
     net = U2NETP(3, 1)
 
 print("loading")
-dict_load = torch.load("weights/u2net_bce_itr_10000_train_0.805740_tar_0.102233.pth", map_location="cpu")
+dict_load = torch.load("weights/u2net_bce_itr_36000_train_0.290388_tar_0.028279.pth", map_location="cpu")
 net.load_state_dict(dict_load)
 print("loading done")
 
