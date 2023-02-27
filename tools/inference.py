@@ -50,7 +50,7 @@ def main():
 
     image_dir = os.path.join("test_data", "test_human_images")
     prediction_dir = os.path.join("test_data", "test_human_images" + "_new" + os.sep)
-    model_dir = os.path.join("weights", "u2net_bce_itr_10000_train_0.805740_tar_0.102233.pth")
+    model_dir = os.path.join("weights", "u2net_bce_itr_216000_train_0.158844_tar_0.013793.pth")
 
     img_name_list = glob.glob(image_dir + os.sep + "*")
     print(img_name_list)
