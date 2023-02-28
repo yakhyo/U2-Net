@@ -1,19 +1,27 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Optional
 
 
-def auto_pad(kernel_size, padding=None, dilation=1):  # kernel, padding, dilation
+def auto_pad(kernel_size: int, padding: Optional[int] = None, dilation: int = 1) -> int:
     # Pad to 'same' shape outputs
     if dilation > 1:
-        kernel_size = dilation * (kernel_size - 1) + 1  # actual kernel-size
+        kernel_size = dilation * (kernel_size - 1) + 1
     if padding is None:
         padding = kernel_size // 2  # auto-pad
     return padding
 
 
 class ConvNormActivation(nn.Module):
-    def __init__(self, in_channels=3, out_channels=3, kernel_size=3, padding=None, dilation=1):
+    def __init__(
+            self,
+            in_channels: int = 3,
+            out_channels: int = 3,
+            kernel_size: int = 3,
+            padding: Optional[int] = None,
+            dilation: int = 1
+    ) -> None:
         super().__init__()
         self.conv = nn.Conv2d(
             in_channels=in_channels,
@@ -26,7 +34,10 @@ class ConvNormActivation(nn.Module):
         self.act = nn.ReLU(inplace=True)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.act(self.norm(self.conv(x)))
+        x = self.conv(x)
+        x = self.norm(x)
+        x = self.act(x)
+        return x
 
 
 class Interpolate(nn.Module):
@@ -34,7 +45,7 @@ class Interpolate(nn.Module):
 
     def __init__(self, scale_factor: int, mode: str = 'bilinear', align_corners: bool = None) -> None:
         super().__init__()
-        self.fn = nn.functional.interpolate
+        self.fn = F.interpolate
         self.scale_factor = scale_factor
         self.mode = mode
         self.align_corners = align_corners
@@ -49,21 +60,20 @@ class Interpolate(nn.Module):
 class RSU7(nn.Module):
     def __init__(self, in_channels=3, mid_channels=12, out_channels=3):
         super().__init__()
-
         self.conv_in = ConvNormActivation(in_channels, out_channels)
-
+        # down 1
         self.conv1 = ConvNormActivation(out_channels, mid_channels)
         self.down1 = nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)
-
+        # down 2
         self.conv2 = ConvNormActivation(mid_channels, mid_channels)
         self.down2 = nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)
-
+        # down 3
         self.conv3 = ConvNormActivation(mid_channels, mid_channels)
         self.down3 = nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)
-
+        # down 4
         self.conv4 = ConvNormActivation(mid_channels, mid_channels)
         self.down4 = nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)
-
+        # down 5
         self.conv5 = ConvNormActivation(mid_channels, mid_channels)
         self.down5 = nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)
 
@@ -71,11 +81,26 @@ class RSU7(nn.Module):
 
         self.conv7 = ConvNormActivation(mid_channels, mid_channels, dilation=2)
 
-        self.conv6d = ConvNormActivation(mid_channels * 2, mid_channels)
-        self.conv5d = ConvNormActivation(mid_channels * 2, mid_channels)
-        self.conv4d = ConvNormActivation(mid_channels * 2, mid_channels)
-        self.conv3d = ConvNormActivation(mid_channels * 2, mid_channels)
-        self.conv2d = ConvNormActivation(mid_channels * 2, mid_channels)
+        self.conv6d = nn.Sequential(
+            ConvNormActivation(mid_channels * 2, mid_channels),
+            Interpolate(scale_factor=2)
+        )
+        self.conv5d = nn.Sequential(
+            ConvNormActivation(mid_channels * 2, mid_channels),
+            Interpolate(scale_factor=2)
+        )
+        self.conv4d = nn.Sequential(
+            ConvNormActivation(mid_channels * 2, mid_channels),
+            Interpolate(scale_factor=2)
+        )
+        self.conv3d = nn.Sequential(
+            ConvNormActivation(mid_channels * 2, mid_channels),
+            Interpolate(scale_factor=2)
+        )
+        self.conv2d = nn.Sequential(
+            ConvNormActivation(mid_channels * 2, mid_channels),
+            Interpolate(scale_factor=2)
+        )
         self.conv1d = ConvNormActivation(mid_channels * 2, out_channels)
 
     def forward(self, x):
@@ -102,21 +127,11 @@ class RSU7(nn.Module):
         hx7 = self.conv7(hx6)
 
         hx6d = self.conv6d(torch.cat((hx7, hx6), 1))
-        hx6dup = F.interpolate(hx6d, scale_factor=2)
-
-        hx5d = self.conv5d(torch.cat((hx6dup, hx5), 1))
-        hx5dup = F.interpolate(hx5d, scale_factor=2)
-
-        hx4d = self.conv4d(torch.cat((hx5dup, hx4), 1))
-        hx4dup = F.interpolate(hx4d, scale_factor=2)
-
-        hx3d = self.conv3d(torch.cat((hx4dup, hx3), 1))
-        hx3dup = F.interpolate(hx3d, scale_factor=2)
-
-        hx2d = self.conv2d(torch.cat((hx3dup, hx2), 1))
-        hx2dup = F.interpolate(hx2d, scale_factor=2)
-
-        hx1d = self.conv1d(torch.cat((hx2dup, hx1), 1))
+        hx5d = self.conv5d(torch.cat((hx6d, hx5), 1))
+        hx4d = self.conv4d(torch.cat((hx5d, hx4), 1))
+        hx3d = self.conv3d(torch.cat((hx4d, hx3), 1))
+        hx2d = self.conv2d(torch.cat((hx3d, hx2), 1))
+        hx1d = self.conv1d(torch.cat((hx2d, hx1), 1))
 
         return hx1d + hxin
 
@@ -531,11 +546,12 @@ class U2NETP(nn.Module):
 
         d0 = self.outconv(torch.cat((d1, d2, d3, d4, d5, d6), 1))
 
-        return torch.sigmoid(d0), torch.sigmoid(d1), torch.sigmoid(d2), torch.sigmoid(d3), torch.sigmoid(d4), torch.sigmoid(d5), torch.sigmoid(d6)
+        return torch.sigmoid(d0), torch.sigmoid(d1), torch.sigmoid(d2), torch.sigmoid(d3), torch.sigmoid(
+            d4), torch.sigmoid(d5), torch.sigmoid(d6)
 
 
 if __name__ == '__main__':
-    model = U2NETP(3, 1)
-    x = torch.randn(1, 3, 640, 640)
-    print(model(x))
+    model = U2NET(3, 1)
+    xx = torch.randn(1, 3, 640, 640)
+    print(model(xx))
     print(sum(p.numel() for p in model.parameters() if p.requires_grad))
